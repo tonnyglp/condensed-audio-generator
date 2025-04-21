@@ -2,23 +2,23 @@
 
 > **Turn any Japanese YouTube conversation into dense, pause‑free audio for immersion practice — no subtitles required.**
 
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license) [![CI](https://img.shields.io/github/actions/workflow/status/tonnyglp/condensed-audio-generator/tests.yml?label=CI)](https://github.com/tonnyglp/condensed-audio-generator/actions)
-
 ---
 
 ## ✨  Why I built this
 
-I’m learning Japanese through “immersion listening”.  
-Existing tools such as **subs2cia** can trim silence **but rely on subtitles** to know where speech happens. Casual YouTube chats rarely come with accurate subs — and manual caption‑cleaning is tedious.
+I’m learning Japanese through **passive immersion**, which means listening to spoken content while doing something else (e.g., walking, commuting, cooking).  
+This works well, but casual talks are full of long pauses and back‑channel noises, so the “language input per minute” is low. A **condensed audio** version — speech only, no silence — makes every minute count.
 
-**Condensed Audio Generator** does the same job **automatically**:
+Existing tools such as **subs2cia** can trim silence **but rely on subtitles** to locate speech. Casual YouTube chats rarely come with accurate captions.
+
+**Condensed Audio Generator** solves the problem automatically:
 
 * downloads a video’s audio,
 * detects speech even over background music,
-* chops out every non‑speech gap,
-* exports a smooth, evenly‑paced track you can loop on your phone.
+* removes every non‑speech gap,
+* exports a smooth, evenly‑paced track you can play on any device.
 
-No subtitles, no hand‑marking.
+No subtitles, no manual marking.
 
 ---
 
@@ -26,45 +26,77 @@ No subtitles, no hand‑marking.
 
 * **Subtitle‑free VAD** – Silero voice‑activity detection keeps words, skips silence/BGM  
 * **Full‑band quality** – cuts the original 48 kHz stream; no high‑end loss  
-* **Custom padding & breathing gaps** – avoids clipping consonants, keeps natural rhythm  
-* **EBU‑R128 loudness normalisation** – constant volume across all chunks  
-* **One‑command CLI**:  
+* **Custom padding & breathing gaps** – avoids clipping consonants, keeps a natural rhythm  
+* **EBU‑R128 loudness normalisation** – constant volume across chunks  
+* **One‑command CLI** ↓  
 
 ```bash
-python condense.py https://youtu.be/VIDEO_ID
+python condense.py <VIDEO_URL>
 ```
 
 * Output formats: **MP3 192 kb/s** (default), Opus, FLAC, WAV  
-* Works on CPU; GPU optional for faster runs  
-* Clean **MIT** licence
+* Runs on CPU; GPU (CUDA) optional for faster processing  
 
 ---
 
 ## 🚀  Quick‑start
 
+### 1. Clone the repo
+
 ```bash
-# 1. clone
 git clone https://github.com/tonnyglp/condensed-audio-generator.git
 cd condensed-audio-generator
-
-# 2. create & activate venv
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip
-
-# 3. install deps (NumPy 1.x for PyTorch 2.2 wheels)
-pip install -r requirements.txt          # or: pip install yt-dlp torch torchaudio ...
-
-# 4. generate condensed audio
-python condense.py https://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
 
-The result appears in `output/` with the **same title as the video**:
+### 2. Create & activate a virtual environment
+
+| Platform | Commands |
+|----------|----------|
+| **macOS / Linux** | ```bash\npython3 -m venv .venv\nsource .venv/bin/activate\n``` |
+| **Windows (PowerShell)** | ```powershell\npython -m venv .venv\n.venv\\Scripts\\Activate.ps1\n``` |
+
+Then upgrade `pip`:
+
+```bash
+python -m pip install -U pip
+```
+
+### 3. Install dependencies
+
+A `requirements.txt` is provided.
+
+```bash
+pip install -r requirements.txt
+```
+
+*(If you prefer a minimal install, see the “Dependencies” section below.)*
+
+### 4. Generate condensed audio
+
+```bash
+python condense.py <VIDEO_URL>
+```
+
+The finished file appears in `output/`:
 
 ```
 output/
-└── 【日本語雑談】推し漫画とゲーム_dense.mp3
+└── d853dc6cc29d4186bfd58355dce58fd1_dense.mp3
 ```
+
+---
+
+## 📦  Dependencies
+
+| Package | Why | Tested version |
+|---------|-----|----------------|
+| **yt‑dlp** | Download best‑quality audio | 2025.03.18 |
+| **torch 2.2.0 + torchaudio** | backend for Silero‑VAD | 2.2.0 |
+| **silero‑vad** | light‑weight JIT VAD model | 0.4.1 |
+| **pydub** & **ffmpeg** | slicing, encoding | pydub 0.25 • ffmpeg 6.1 |
+| **soundfile, numpy\<2** | reading WAV, array ops | 0.12 • 1.26 |
+
+> **Note:** PyTorch ≤ 2.2 wheels expect **NumPy 1.x**, so the requirements file pins `numpy<2` to avoid ABI errors.
 
 ---
 
@@ -80,16 +112,9 @@ positional arguments:
 options:
   --outdir DIR          destination folder (default: output/)
   --format …            mp3 | opus | flac | wav  (default: mp3)
-  --merge GAP           merge segments ≤ GAP s apart (default: 0.30)
-  --pad MS              pad every kept chunk (ms)   (default: 80)
+  --merge GAP           merge segments ≤ GAP s apart (default: 1.0)
+  --pad MS              pad each kept chunk (ms)   (default: 200)
   --gap MS              silence inserted between chunks (default: 150)
-```
-
-### Example
-
-```bash
-# Podcast‑like pacing, Opus 160 kb/s
-python condense.py https://youtu.be/abcdef --merge 0.4 --gap 250 --format opus
 ```
 
 ---
@@ -97,44 +122,29 @@ python condense.py https://youtu.be/abcdef --merge 0.4 --gap 250 --format opus
 ## 🏗️  How it works
 
 1. **yt‑dlp** downloads best audio → `original.wav` (48 kHz stereo)  
-2. **ffmpeg** makes a mono 16 kHz **copy** for VAD  
+2. **ffmpeg** makes a mono 16 kHz copy for VAD  
 3. **Silero‑VAD** finds speech frames → `[start, end]` intervals  
 4. Intervals are **padded** ± `--pad` ms & **merged** if closer than `--merge` s  
 5. **pydub** slices the *original* 48 kHz file, inserts `--gap` ms silence between pieces  
 6. **ffmpeg** applies EBU‑R128 `loudnorm` and encodes (MP3, Opus…)  
 
-Total time: ~ 8 min for a 2 h chat on M2 Air (ARM‑CPU only).
-
 ---
 
 ## 🗺️  Roadmap / TODO
 
-* [ ] **Keep original YouTube title** for output filename (done!)  
-* [ ] 5 ms fade‑in/out to remove clicks  
-* [ ] Performance: explore parallel chunk rendering to drop 2 h → 2 min  
-* [ ] Interactive GUI (Streamlit)  
-* [ ] Docker image & PyPI package  
+* Keep original YouTube title for the output filename  
+* Add fade‑in/out to remove clicks  
+* Performance improvement (target: 2 min for 2 h video)  
 
-Contributions welcome — see below!
-
----
-
-## 🤝  Contributing
-
-1. Fork & create a feature branch.  
-2. Follow **black**, **isort**, **ruff** for linting.  
-3. Run `pytest`.  
-4. Open a PR; GitHub CI will run the tests.
-
-Please file bugs or feature requests via **GitHub Issues**.
+PRs and ideas are very welcome.
 
 ---
 
 ## 🙏  Acknowledgements
 
-* **Silero team** for the tiny, multilingual VAD model  
-* **yt‑dlp** community for robust YouTube extraction  
-* **FFmpeg** & **PyDub** projects  
+* **Silero** – multilingual VAD model  
+* **yt‑dlp** – robust YouTube extraction  
+* **FFmpeg** & **PyDub** – the audio workhorses  
 * Inspiration from **subs2cia**
 
 ---
@@ -142,16 +152,9 @@ Please file bugs or feature requests via **GitHub Issues**.
 ## ⚠️  Disclaimer
 
 Downloading YouTube content may violate YouTube’s Terms of Service in your
-jurisdiction. This tool is provided **for personal‑use study only**; you are
+jurisdiction. This tool is provided **for personal study only**; you are
 responsible for ensuring you have the right to download and process any media.
 
 ---
 
-## 📜  License
-
-This project is released under the **MIT License**.  
-See [`LICENSE`](LICENSE) for full text.
-
----
-
-> 2025 · Maintained by [**@tonnyglp**](https://github.com/tonnyglp)
+> © 2025 Maintained by [**@tonnyglp**](https://github.com/tonnyglp)

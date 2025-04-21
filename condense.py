@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-condense.py
------------
-Download a YouTube video, extract audio, remove non‑speech
-intervals (even with BGM), and write a dense speech file.
-
-Usage:
-    python condense.py <youtube_url> [--outdir output] [--merge 0.3] [--format mp3]
-"""
 
 import argparse, json, math, os, subprocess, sys, tempfile, uuid
 from pathlib import Path
@@ -23,9 +14,9 @@ from pydub import AudioSegment
 
 def download_audio(url: str, workdir: Path):
     """
-    1. Grab the best native audio track (usually 48 kHz).
+    1. Grab the best native audio track (usually 48 kHz).
     2. Keep it as 'original.wav'.
-    3. Create a 16 kHz mono copy ONLY for VAD ('original.16k.wav').
+    3. Create a 16 kHz mono copy ONLY for VAD ('original.16k.wav').
     """
     orig = workdir / "original.wav"
     cmd = [
@@ -42,22 +33,22 @@ def download_audio(url: str, workdir: Path):
     return orig, vad_wav
 
 
-def run_vad(wav_path: Path, threshold: float = 0.6, pad_ms: int = 80):
+def run_vad(wav_path: Path, threshold: float = 0.6, pad_ms: int = 200):
     """
     Returns a list of (start_sec, end_sec) speech intervals.
     """
-    model = load_silero_vad()            # lightweight JIT (~2 MB)
-    wav = read_audio(str(wav_path))      # torch.Tensor, 16 kHz mono
+    model = load_silero_vad()            # lightweight JIT (~2 MB)
+    wav = read_audio(str(wav_path))      # torch.Tensor, 16 kHz mono
     timestamps = get_speech_timestamps(
         wav,
         model,
         threshold=threshold,
         speech_pad_ms=pad_ms,
-        return_seconds=True)             # ← direct seconds, no div by 16 k
+        return_seconds=True)             # ← direct seconds, no div by 16 k
     return [(t['start'], t['end']) for t in timestamps]
 
 
-def merge_intervals(segments, max_gap=0.3):
+def merge_intervals(segments, max_gap=1.0):
     """
     Merge speech segments with a gap ≤ max_gap seconds.
     """
@@ -90,10 +81,10 @@ def cut_and_concatenate(wav_path: Path, segments, out_path: Path, gap_ms: int = 
 
 def encode_final(wav_path: Path, out_path: Path, codec: str = "mp3"):
     """
-    ffmpeg → MP3 (or Opus / FLAC / …)
+    ffmpeg → MP3 (or Opus / FLAC / …)
     """
     codec_map = {
-        "mp3":  ["-codec:a", "libmp3lame", "-b:a", "192k"],   # bump to 192 k
+        "mp3":  ["-codec:a", "libmp3lame", "-b:a", "192k"],   # bump to 192 k
         "opus": ["-codec:a", "libopus", "-b:a", "160k", "-application", "audio"],
         "flac": ["-codec:a", "flac"],
         "wav":  [],
@@ -120,7 +111,7 @@ def main():
                     help="output audio format")
     ap.add_argument("--pad", type=int, default=200,
                     help="padding in ms added before and after each speech chunk")
-    ap.add_argument("--gap", type=int, default=100,
+    ap.add_argument("--gap", type=int, default=150,
                     help="silence (ms) inserted between chunks")
 
     args = ap.parse_args()
