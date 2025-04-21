@@ -54,9 +54,11 @@ cd condensed-audio-generator
 |----------|-------------|--------------|
 | **macOS / Linux (bash/zsh)** | `python3 -m venv .venv` | `source .venv/bin/activate` |
 | **Windows – PowerShell** | `python -m venv .venv` | `.venv\Scripts\Activate.ps1` |
-| **Windows – cmd.exe** (optional) | `python -m venv .venv` | `.venv\Scripts\activate.bat` |
+| **Windows – cmd.exe** | `python -m venv .venv` | `.venv\Scripts\activate.bat` |
 
 If PowerShell’s execution policy blocks the script, run `Set‑ExecutionPolicy -Scope Process RemoteSigned` once in the same window.
+
+> **System requirement:** python3 and python3-venv must be installed and available on your `PATH`.
 
 ### 3. Install dependencies
 
@@ -95,11 +97,11 @@ output/
 
 | Package | Why | Tested version |
 |---------|-----|----------------|
-| **yt‑dlp** | Download best‑quality audio | 2025.03.18 |
+| **yt‑dlp** | Download best‑quality audio | 2025.03.31 |
 | **torch 2.2.0 + torchaudio** | backend for Silero‑VAD | 2.2.0 |
-| **silero‑vad** | light‑weight JIT VAD model | 0.4.1 |
-| **pydub** & **ffmpeg** | slicing, encoding | pydub 0.25 • ffmpeg 6.1 |
-| **soundfile, numpy\<2** | reading WAV, array ops | 0.12 • 1.26 |
+| **silero‑vad** | light‑weight JIT VAD model | 5.1.2 |
+| **pydub** & **ffmpeg** | slicing, encoding | pydub 0.25.1 • ffmpeg 6.1.1 |
+| **soundfile, numpy\<2** | reading WAV, array ops | 0.13.1 • 1.26.4 |
 
 > **Note:** PyTorch ≤ 2.2 wheels expect **NumPy 1.x**, so the requirements file pins `numpy<2` to avoid ABI errors.
 
