@@ -50,24 +50,29 @@ cd condensed-audio-generator
 
 ### 2. Create & activate a virtual environment
 
-| Platform | Commands |
-|----------|----------|
-| **macOS / Linux** | ```bash\npython3 -m venv .venv\nsource .venv/bin/activate\n``` |
-| **Windows (PowerShell)** | ```powershell\npython -m venv .venv\n.venv\\Scripts\\Activate.ps1\n``` |
+| Platform | Create venv | **Activate** |
+|----------|-------------|--------------|
+| **macOS / Linux (bash/zsh)** | `python3 -m venv .venv` | `source .venv/bin/activate` |
+| **Windows – PowerShell** | `python -m venv .venv` | `.venv\Scripts\Activate.ps1` |
+| **Windows – cmd.exe** (optional) | `python -m venv .venv` | `.venv\Scripts\activate.bat` |
 
-Then upgrade `pip`:
+If PowerShell’s execution policy blocks the script, run `Set‑ExecutionPolicy -Scope Process RemoteSigned` once in the same window.
+
+### 3. Install dependencies
+
+Upgrade `pip`:
 
 ```bash
 python -m pip install -U pip
 ```
 
-### 3. Install dependencies
-
-A `requirements.txt` is provided.
+For dependencies, a `requirements.txt` is provided.
 
 ```bash
 pip install -r requirements.txt
 ```
+
+> **System requirement:** FFmpeg (≥ 4.4) must be installed separately and available on your `PATH`.
 
 *(If you prefer a minimal install, see the “Dependencies” section below.)*
 

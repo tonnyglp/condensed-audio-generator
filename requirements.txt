@@ -1,0 +1,14 @@
+# Core
+numpy<2                   # PyTorch <=2.2 wheels were built against NumPy 1.x
+torch==2.2.0
+torchaudio==2.2.0
+
+# Speech detection
+silero-vad==0.4.1
+
+# Audio processing & I/O
+pydub>=0.25.1
+soundfile>=0.12.1
+
+# Downloader
+yt-dlp>=2024.10.06
