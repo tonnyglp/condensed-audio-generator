@@ -88,10 +88,10 @@ The finished file appears in `output/`:
 
 ```
 output/
-└── d853dc6cc29d4186bfd58355dce58fd1_dense.mp3
+└── <TITLE> by <UPLOADER> (condensed).mp3
 ```
 
-### Optional: when you’re done, leave the venv
+### 5. (Optional) When you’re done, leave the venv
 
 ```bash
 deactivate
@@ -115,7 +115,7 @@ Windows (cmd)  :  .venv\Scripts\activate.bat
 # 3. Run the tool with any options you like:
 python condense.py <VIDEO_URL> [--format mp3|opus|flac|wav] [--pad 200] …
 
-# Optional: when you’re done, leave the venv
+# 4. (Optional) When you’re done, leave the venv
 deactivate
 ```
 
@@ -170,7 +170,7 @@ options:
 ## 🗺️  Roadmap / TODO
 
 * Keep original YouTube title for the output filename ✅  
-* Confirmed support for multiple languages (Japanese, Chinese, English, …) ✅  
+* Confirm support for multiple languages (Japanese, Chinese, English, …) ✅  
 * Add fade‑in/out to remove clicks  
 * Performance improvement (target: 2 min for 2 h video)  
 
