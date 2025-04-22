@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
-import argparse, json, math, os, subprocess, sys, tempfile, uuid
+import argparse, subprocess, tempfile, uuid, re, shutil
 from pathlib import Path
-
-import numpy as np
-import soundfile as sf
 from silero_vad import load_silero_vad, read_audio, get_speech_timestamps
 from pydub import AudioSegment
 
@@ -17,7 +14,9 @@ def download_audio(url: str, workdir: Path):
     1. Grab the best native audio track (usually 48 kHz).
     2. Keep it as 'original.wav'.
     3. Create a 16 kHz mono copy ONLY for VAD ('original.16k.wav').
+    4. Also return the video title & channel name
     """
+    title, channel = get_video_meta(url)
     orig = workdir / "original.wav"
     cmd = [
         "yt-dlp", "-f", "bestaudio", "--extract-audio",
@@ -30,7 +29,7 @@ def download_audio(url: str, workdir: Path):
         ["ffmpeg", "-y", "-i", str(orig),
          "-ac", "1", "-ar", "16000", str(vad_wav)],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return orig, vad_wav
+    return orig, vad_wav, title, channel
 
 
 def run_vad(wav_path: Path, threshold: float = 0.6, pad_ms: int = 0):
@@ -96,6 +95,29 @@ def encode_final(wav_path: Path, out_path: Path, codec: str = "mp3"):
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
+def safe_filename(text: str, max_len: int = 100) -> str:
+    """
+    Replace characters that are forbidden on Windows/macOS/Linux with "_",
+    collapse whitespace, and hard‑truncate to *max_len* UTF‑8 bytes.
+    """
+    text = re.sub(r'[\\/*?:"<>|]', "_", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text.encode("utf‑8")[:max_len].decode("utf‑8", "ignore")
+
+
+def get_video_meta(url: str) -> tuple[str, str]:
+    """
+    Return *(title, channel)* for *url* using yt‑dlp.
+    """
+    title   = subprocess.check_output(
+        ["yt-dlp", "--no-playlist", "--get-title", url],
+        text=True, stderr=subprocess.DEVNULL).strip()
+    channel = subprocess.check_output(
+        ["yt-dlp", "--no-playlist", "--print", "uploader", url],
+        text=True, stderr=subprocess.DEVNULL).strip()
+    return safe_filename(title), safe_filename(channel)
+
+
 # ---------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------
@@ -124,7 +146,7 @@ def main():
     raw_wav = tmp / f"{base}.wav"
 
     print("▶  Downloading & converting …")
-    orig_wav, vad_wav = download_audio(args.url, tmp)
+    orig_wav, vad_wav, vid_title, vid_channel = download_audio(args.url, tmp)
 
     print("▶  Running VAD …")
     segs = run_vad(vad_wav, threshold=0.6, pad_ms=args.pad)
@@ -137,12 +159,12 @@ def main():
     cut_and_concatenate(orig_wav, segs, dense_wav, gap_ms=args.gap)
 
     print("▶  Encoding final output …")
-    final = outdir / f"{base}_dense.{args.format}"
+    stem  = f"{vid_title} by {vid_channel} (condensed)"
+    final = outdir / f"{stem}.{args.format}"
     encode_final(dense_wav, final, args.format)
 
     print("✅  Done:", final.resolve())
-    # Cleanup (optional)
-    # shutil.rmtree(tmp)
+    shutil.rmtree(tmp)  # Cleanup
 
 if __name__ == "__main__":
     main()

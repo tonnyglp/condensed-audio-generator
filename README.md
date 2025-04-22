@@ -91,6 +91,12 @@ output/
 └── d853dc6cc29d4186bfd58355dce58fd1_dense.mp3
 ```
 
+### Optional: when you’re done, leave the venv
+
+```bash
+deactivate
+```
+
 ---
 
 ## 🔄 Next‑time (everyday) usage
@@ -163,9 +169,10 @@ options:
 
 ## 🗺️  Roadmap / TODO
 
-* Keep original YouTube title for the output filename  
+* Keep original YouTube title for the output filename (Done!)  
 * Add fade‑in/out to remove clicks  
 * Performance improvement (target: 2 min for 2 h video)  
+* Test whether this script works with other languages (e.g., Chinese, English)
 
 PRs and ideas are very welcome.
 
