@@ -55,7 +55,7 @@ def merge_intervals(segments, max_gap=1.0):
     if not segments:
         return []
 
-    merged = [segments[0]]
+    merged = [list(segments[0])]
     for start, end in segments[1:]:
         prev_start, prev_end = merged[-1]
         if start - prev_end <= max_gap:
