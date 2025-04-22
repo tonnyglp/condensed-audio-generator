@@ -33,7 +33,7 @@ def download_audio(url: str, workdir: Path):
     return orig, vad_wav
 
 
-def run_vad(wav_path: Path, threshold: float = 0.6, pad_ms: int = 200):
+def run_vad(wav_path: Path, threshold: float = 0.6, pad_ms: int = 0):
     """
     Returns a list of (start_sec, end_sec) speech intervals.
     """
@@ -65,7 +65,7 @@ def merge_intervals(segments, max_gap=1.0):
     return merged
 
 
-def cut_and_concatenate(wav_path: Path, segments, out_path: Path, gap_ms: int = 150):
+def cut_and_concatenate(wav_path: Path, segments, out_path: Path, gap_ms: int = 0):
     """
     Use pydub to cut & join, then export to WAV.
     """
@@ -109,9 +109,9 @@ def main():
     ap.add_argument("--format", default="mp3",
                     choices=["mp3", "opus", "flac", "wav"],
                     help="output audio format")
-    ap.add_argument("--pad", type=int, default=200,
+    ap.add_argument("--pad", type=int, default=250,
                     help="padding in ms added before and after each speech chunk")
-    ap.add_argument("--gap", type=int, default=150,
+    ap.add_argument("--gap", type=int, default=0,
                     help="silence (ms) inserted between chunks")
 
     args = ap.parse_args()

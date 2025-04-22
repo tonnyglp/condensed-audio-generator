@@ -144,8 +144,8 @@ options:
   --outdir DIR          destination folder (default: output/)
   --format …            mp3 | opus | flac | wav  (default: mp3)
   --merge GAP           merge segments ≤ GAP (s) apart (default: 1.0)
-  --pad MS              pad each kept chunk (ms)   (default: 200)
-  --gap MS              silence inserted between chunks (default: 150)
+  --pad MS              pad each kept chunk (ms)   (default: 250)
+  --gap MS              silence inserted between chunks (default: 0)
 ```
 
 ---
